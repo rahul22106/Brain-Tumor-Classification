@@ -9,7 +9,6 @@ from ensure import ensure_annotations
 from box import ConfigBox
 from box.exceptions import BoxValueError
 from BT_Classification import logger
-from BT_Classification import CustomException
 
 
 @ensure_annotations
