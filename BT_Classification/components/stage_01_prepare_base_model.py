@@ -34,15 +34,15 @@ class PrepareBaseModel:
                 weights=self.config.params_weights
             )
             
-            # Save base model
+            # Save base model using modern Keras format
             self.model.save(str(self.config.base_model_path))
-            logger.info(f"✓ Base model saved at: {self.config.base_model_path}")
+            logger.info(f"Base model saved at: {self.config.base_model_path}")
             
             # Model summary
-            logger.info(f"✓ Model: MobileNetV2")
-            logger.info(f"✓ Input shape: {self.config.params_image_size}")
-            logger.info(f"✓ Total layers: {len(self.model.layers)}")
-            logger.info(f"✓ Trainable params: {self.model.count_params():,}")
+            logger.info(f"Model: MobileNetV2")
+            logger.info(f"Input shape: {self.config.params_image_size}")
+            logger.info(f"Total layers: {len(self.model.layers)}")
+            logger.info(f"Trainable params: {self.model.count_params():,}")
             
         except Exception as e:
             logger.exception(e)
@@ -79,8 +79,8 @@ class PrepareBaseModel:
             trainable_count = sum([tf.keras.backend.count_params(w) for w in model.trainable_weights])
             non_trainable_count = sum([tf.keras.backend.count_params(w) for w in model.non_trainable_weights])
             
-            logger.info(f"✓ Trainable parameters: {trainable_count:,}")
-            logger.info(f"✓ Non-trainable parameters: {non_trainable_count:,}")
+            logger.info(f"Trainable parameters: {trainable_count:,}")
+            logger.info(f"Non-trainable parameters: {non_trainable_count:,}")
             
             # Add custom classification head
             logger.info("Adding custom classification head...")
@@ -122,10 +122,10 @@ class PrepareBaseModel:
                 metrics=['accuracy', tf.keras.metrics.Precision(), tf.keras.metrics.Recall()]
             )
             
-            logger.info("✓ Model compiled successfully")
-            logger.info(f"✓ Optimizer: Adam (lr={learning_rate})")
-            logger.info(f"✓ Loss: Categorical Crossentropy")
-            logger.info(f"✓ Metrics: Accuracy, Precision, Recall")
+            logger.info("Model compiled successfully")
+            logger.info(f"Optimizer: Adam (lr={learning_rate})")
+            logger.info(f"Loss: Categorical Crossentropy")
+            logger.info(f"Metrics: Accuracy, Precision, Recall")
             
             return full_model
             
@@ -150,9 +150,9 @@ class PrepareBaseModel:
                 learning_rate=self.config.params_learning_rate
             )
             
-            # Save updated model
+            # Save updated model using modern Keras format
             self.full_model.save(str(self.config.updated_base_model_path))
-            logger.info(f"✓ Updated model saved at: {self.config.updated_base_model_path}")
+            logger.info(f"Updated model saved at: {self.config.updated_base_model_path}")
             
             # Print model summary
             logger.info("\n" + "="*70)
@@ -184,17 +184,17 @@ class PrepareBaseModel:
             self.update_base_model()
             
             logger.info("\n" + "="*70)
-            logger.info("✓ BASE MODEL PREPARATION COMPLETED SUCCESSFULLY")
+            logger.info("BASE MODEL PREPARATION COMPLETED SUCCESSFULLY")
             logger.info("="*70)
             
             logger.info("\nModel Details:")
-            logger.info(f"  → Architecture: MobileNetV2 + Custom Head")
-            logger.info(f"  → Input Size: {self.config.params_image_size}")
-            logger.info(f"  → Number of Classes: {self.config.params_classes}")
-            logger.info(f"  → Class Names: glioma_tumor, meningioma_tumor, no_tumor, pituitary_tumor")
-            logger.info(f"  → Base Model: Frozen (Transfer Learning)")
-            logger.info(f"  → Learning Rate: {self.config.params_learning_rate}")
-            logger.info(f"  → Model Ready for Training!")
+            logger.info(f"  Architecture: MobileNetV2 + Custom Head")
+            logger.info(f"  Input Size: {self.config.params_image_size}")
+            logger.info(f"  Number of Classes: {self.config.params_classes}")
+            logger.info(f"  Class Names: glioma_tumor, meningioma_tumor, no_tumor, pituitary_tumor")
+            logger.info(f"  Base Model: Frozen (Transfer Learning)")
+            logger.info(f"  Learning Rate: {self.config.params_learning_rate}")
+            logger.info(f"  Model Ready for Training!")
             
             return str(self.config.updated_base_model_path)
             
