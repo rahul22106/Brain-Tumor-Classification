@@ -1,6 +1,7 @@
 from BT_Classification import logger
 from BT_Classification.pipeline import DataIngestionTrainingPipeline
 from BT_Classification.pipeline import PrepareBaseModelTrainingPipeline
+from BT_Classification.pipeline import ModelTrainingPipeline
 
 
 STAGE_NAME = "Data Ingestion Stage"
@@ -30,6 +31,24 @@ try:
     
     prepare_base_model = PrepareBaseModelTrainingPipeline()
     prepare_base_model.main()
+    
+    logger.info(f"\n{'='*70}")
+    logger.info(f">>>>>> stage {STAGE_NAME} completed <<<<<<")
+    logger.info(f"{'='*70}\n\n")
+    
+except Exception as e:
+    logger.exception(e)
+    raise e
+
+# Stage 03: Model Training
+STAGE_NAME = "Model Training Stage"
+try:
+    logger.info(f"\n{'='*70}")
+    logger.info(f">>>>>> stage {STAGE_NAME} started <<<<<<")
+    logger.info(f"{'='*70}\n")
+    
+    model_training = ModelTrainingPipeline()
+    model_training.main()
     
     logger.info(f"\n{'='*70}")
     logger.info(f">>>>>> stage {STAGE_NAME} completed <<<<<<")

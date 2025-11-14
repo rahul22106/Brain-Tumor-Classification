@@ -1,7 +1,7 @@
 from BT_Classification.constants import *
 from BT_Classification.utils.common import read_yaml, create_directories
 from BT_Classification.entity import (
-    DataIngestionConfig,PrepareBaseModelConfig
+    DataIngestionConfig,PrepareBaseModelConfig,MLflowConfig,TrainingConfig
 )
 
 
@@ -71,6 +71,51 @@ class ConfigurationManager:
         return prepare_base_model_config
     
 
-
-
+    def get_training_config(self) -> TrainingConfig:
+        """
+        Get Training configuration
+        
+        Returns:
+            TrainingConfig: Configuration object for model training
+        """
+        training = self.config.training
+        prepare_base_model = self.config.prepare_base_model
+        params = self.params
+        training_data = self.config.data_ingestion.train_data_dir
+        
+        create_directories([Path(training.root_dir)])
+        
+        training_config = TrainingConfig(
+            root_dir=Path(training.root_dir),
+            trained_model_path=Path(training.trained_model_path),
+            updated_base_model_path=Path(prepare_base_model.updated_base_model_path),
+            training_data=Path(training_data),
+            params_epochs=params.EPOCHS,
+            params_batch_size=params.BATCH_SIZE,
+            params_is_augmentation=params.AUGMENTATION,
+            params_image_size=params.IMAGE_SIZE,
+            params_learning_rate=params.LEARNING_RATE
+        )
+        
+        return training_config
+    
+    
+    def get_mlflow_config(self) -> MLflowConfig:
+        """
+        Get MLflow configuration
+        
+        Returns:
+            MLflowConfig: Configuration object for MLflow tracking
+        """
+        mlflow_config_data = self.config.mlflow
+        
+        mlflow_config = MLflowConfig(
+            experiment_name=mlflow_config_data.experiment_name,
+            run_name_prefix=mlflow_config_data.run_name_prefix,
+            tracking_uri=mlflow_config_data.tracking_uri if mlflow_config_data.tracking_uri else "",
+            registered_model_name=mlflow_config_data.registered_model_name,
+            tags=dict(mlflow_config_data.tags) if hasattr(mlflow_config_data, 'tags') else {}
+        )
+        
+        return mlflow_config
         

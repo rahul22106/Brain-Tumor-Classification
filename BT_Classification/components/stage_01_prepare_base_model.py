@@ -47,22 +47,12 @@ class PrepareBaseModel:
         except Exception as e:
             logger.exception(e)
             raise e
-    
+
     
     @staticmethod
     def _prepare_full_model(model, classes, freeze_all, freeze_till, learning_rate):
         """
-        Add custom classification head to base model
-        
-        Args:
-            model: Base MobileNetV2 model
-            classes: Number of output classes
-            freeze_all: Whether to freeze all base layers
-            freeze_till: Number of layers to freeze (if freeze_all is False)
-            learning_rate: Learning rate for optimizer
-            
-        Returns:
-            Updated model with custom head
+        Add optimized custom classification head to base model for better learning
         """
         try:
             # Freeze layers if specified
@@ -82,57 +72,58 @@ class PrepareBaseModel:
             logger.info(f"Trainable parameters: {trainable_count:,}")
             logger.info(f"Non-trainable parameters: {non_trainable_count:,}")
             
-            # Add custom classification head
-            logger.info("Adding custom classification head...")
-            
-            # Global Average Pooling
-            flatten_in = tf.keras.layers.GlobalAveragePooling2D()(model.output)
-            
-            # Dropout for regularization
-            dropout = tf.keras.layers.Dropout(0.3)(flatten_in)
-            
-            # Dense layer with ReLU activation
-            dense = tf.keras.layers.Dense(
-                units=128,
+            logger.info("Adding optimized custom classification head...")
+
+            # Start with Global Average Pooling
+            x = tf.keras.layers.GlobalAveragePooling2D()(model.output)
+
+            # First Dense layer - increased capacity for better learning
+            x = tf.keras.layers.Dense(
+                units=256,  # Increased from 128
                 activation='relu',
-                kernel_regularizer=tf.keras.regularizers.l2(0.001)
-            )(dropout)
+                kernel_regularizer=tf.keras.regularizers.l2(0.001)  # Reduced regularization
+            )(x)
             
-            # Another dropout
-            dropout2 = tf.keras.layers.Dropout(0.2)(dense)
+            x = tf.keras.layers.BatchNormalization()(x)
+            x = tf.keras.layers.Dropout(0.3)(x)  # Reduced from 0.7
+
+            # Second Dense layer - keep for better feature learning
+            x = tf.keras.layers.Dense(
+                units=128,  # Increased from 64
+                activation='relu',
+                kernel_regularizer=tf.keras.regularizers.l2(0.001)  
+            )(x)
             
-            # Output layer for 4 tumor classes
+            x = tf.keras.layers.BatchNormalization()(x)
+            x = tf.keras.layers.Dropout(0.2)(x) 
+
+            # Final output layer with minimal regularization
             prediction = tf.keras.layers.Dense(
                 units=classes,
                 activation='softmax',
+                kernel_regularizer=tf.keras.regularizers.l2(0.0001),  
                 name='output_layer'
-            )(dropout2)
-            
+            )(x)
+
             # Create full model
             full_model = tf.keras.models.Model(
                 inputs=model.input,
                 outputs=prediction
             )
             
-            # Compile model
-            logger.info("Compiling model...")
+            # Compile model with higher learning rate for better convergence
             full_model.compile(
                 optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
                 loss='categorical_crossentropy',
-                metrics=['accuracy', tf.keras.metrics.Precision(), tf.keras.metrics.Recall()]
+                metrics=['accuracy']
             )
-            
-            logger.info("Model compiled successfully")
-            logger.info(f"Optimizer: Adam (lr={learning_rate})")
-            logger.info(f"Loss: Categorical Crossentropy")
-            logger.info(f"Metrics: Accuracy, Precision, Recall")
             
             return full_model
             
         except Exception as e:
-            logger.exception(e)
+            logger.exception(f"Error in model preparation: {str(e)}")
             raise e
-    
+
     
     def update_base_model(self):
         """
@@ -141,14 +132,21 @@ class PrepareBaseModel:
         try:
             logger.info("Updating base model with custom head...")
             
-            # Prepare full model with custom head
+            # Prepare full model with custom head - UNFREEZE some layers for fine-tuning
             self.full_model = self._prepare_full_model(
                 model=self.model,
                 classes=self.config.params_classes,
-                freeze_all=True,  # Freeze all for transfer learning
-                freeze_till=None,
-                learning_rate=self.config.params_learning_rate
+                freeze_all=False,  # CHANGED: Don't freeze all layers
+                freeze_till=100,   # Freeze first 100 layers, unfreeze the rest for fine-tuning
+                learning_rate=0.001  # CHANGED: Higher learning rate for better convergence
             )
+            
+            # Log layer information
+            trainable_count = sum([tf.keras.backend.count_params(w) for w in self.full_model.trainable_weights])
+            non_trainable_count = sum([tf.keras.backend.count_params(w) for w in self.full_model.non_trainable_weights])
+            
+            logger.info(f"Final model - Trainable parameters: {trainable_count:,}")
+            logger.info(f"Final model - Non-trainable parameters: {non_trainable_count:,}")
             
             # Save updated model using modern Keras format
             self.full_model.save(str(self.config.updated_base_model_path))
@@ -192,8 +190,8 @@ class PrepareBaseModel:
             logger.info(f"  Input Size: {self.config.params_image_size}")
             logger.info(f"  Number of Classes: {self.config.params_classes}")
             logger.info(f"  Class Names: glioma_tumor, meningioma_tumor, no_tumor, pituitary_tumor")
-            logger.info(f"  Base Model: Frozen (Transfer Learning)")
-            logger.info(f"  Learning Rate: {self.config.params_learning_rate}")
+            logger.info(f"  Base Model: Partially Frozen (First 100 layers frozen)")
+            logger.info(f"  Learning Rate: 0.001 (Optimized for convergence)")
             logger.info(f"  Model Ready for Training!")
             
             return str(self.config.updated_base_model_path)
@@ -201,3 +199,4 @@ class PrepareBaseModel:
         except Exception as e:
             logger.exception(e)
             raise e
+        

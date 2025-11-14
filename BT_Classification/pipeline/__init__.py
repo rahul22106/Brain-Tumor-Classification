@@ -1,5 +1,7 @@
 from BT_Classification.config.configuration import ConfigurationManager
 from BT_Classification.components.stage_00_data_ingestion import DataIngestion
+from BT_Classification.components.stage_01_prepare_base_model import PrepareBaseModel
+from BT_Classification.components.stage_02_model_trainer import Training
 from BT_Classification import logger
 
 
@@ -69,6 +71,42 @@ if __name__ == '__main__':
         logger.info(f"{'='*70}\n")
         
         obj = PrepareBaseModelTrainingPipeline()
+        obj.main()
+        
+        logger.info(f"\n{'='*70}")
+        logger.info(f">>>>>> stage {STAGE_NAME} completed <<<<<<")
+        logger.info(f"{'='*70}\n")
+        
+    except Exception as e:
+        logger.exception(e)
+        raise e    
+    
+STAGE_NAME = "Model Training Stage"
+
+
+class ModelTrainingPipeline:
+    """
+    Pipeline for Model Training Stage
+    """
+    def __init__(self):
+        pass
+    
+    def main(self):
+        """Execute model training pipeline"""
+        config = ConfigurationManager()
+        training_config = config.get_training_config()
+        mlflow_config = config.get_mlflow_config()
+        training = Training(config=training_config, mlflow_config=mlflow_config)
+        training.initiate_model_training()
+
+
+if __name__ == '__main__':
+    try:
+        logger.info(f"\n{'='*70}")
+        logger.info(f">>>>>> stage {STAGE_NAME} started <<<<<<")
+        logger.info(f"{'='*70}\n")
+        
+        obj = ModelTrainingPipeline()
         obj.main()
         
         logger.info(f"\n{'='*70}")
