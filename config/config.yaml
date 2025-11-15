@@ -35,3 +35,9 @@ mlflow:
     dataset: "Brain Tumor MRI"
     framework: "TensorFlow/Keras"
     author: "rahul22106"
+
+evaluation:
+  root_dir: artifacts/evaluation
+  path_of_model: artifacts/training/model.keras
+  test_data_dir: artifacts/data_ingestion/testing
+  metric_file_name: scores.json

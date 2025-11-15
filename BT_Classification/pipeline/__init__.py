@@ -2,6 +2,7 @@ from BT_Classification.config.configuration import ConfigurationManager
 from BT_Classification.components.stage_00_data_ingestion import DataIngestion
 from BT_Classification.components.stage_01_prepare_base_model import PrepareBaseModel
 from BT_Classification.components.stage_02_model_trainer import Training
+from BT_Classification.components.stage_03_model_evaluation import Evaluation
 from BT_Classification import logger
 
 
@@ -39,11 +40,6 @@ if __name__ == '__main__':
     except Exception as e:
         logger.exception(e)
         raise e
-    
-
-from BT_Classification.config.configuration import ConfigurationManager
-from BT_Classification.components.stage_01_prepare_base_model import PrepareBaseModel
-from BT_Classification import logger
 
 
 STAGE_NAME = "Prepare Base Model Stage"
@@ -107,6 +103,41 @@ if __name__ == '__main__':
         logger.info(f"{'='*70}\n")
         
         obj = ModelTrainingPipeline()
+        obj.main()
+        
+        logger.info(f"\n{'='*70}")
+        logger.info(f">>>>>> stage {STAGE_NAME} completed <<<<<<")
+        logger.info(f"{'='*70}\n")
+        
+    except Exception as e:
+        logger.exception(e)
+        raise e    
+    
+STAGE_NAME = "Model Evaluation Stage"
+
+class ModelEvaluationPipeline:
+    """
+    Pipeline for Model Evaluation Stage
+    """
+    def __init__(self):
+        pass
+    
+    def main(self):
+        """Execute model evaluation pipeline"""
+        config = ConfigurationManager()
+        evaluation_config = config.get_evaluation_config()
+        mlflow_config = config.get_mlflow_config()
+        evaluation = Evaluation(config=evaluation_config, mlflow_config=mlflow_config)
+        evaluation.evaluation()
+
+
+if __name__ == '__main__':
+    try:
+        logger.info(f"\n{'='*70}")
+        logger.info(f">>>>>> stage {STAGE_NAME} started <<<<<<")
+        logger.info(f"{'='*70}\n")
+        
+        obj = ModelEvaluationPipeline()
         obj.main()
         
         logger.info(f"\n{'='*70}")

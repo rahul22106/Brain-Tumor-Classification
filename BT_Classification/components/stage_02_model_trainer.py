@@ -5,72 +5,59 @@ import tensorflow as tf
 import mlflow
 import mlflow.tensorflow
 import dagshub
+from sklearn.utils import class_weight
+import numpy as np
 from BT_Classification import logger
 from BT_Classification.entity import TrainingConfig, MLflowConfig
 
 
 class Training:
     """
-    Component for training the brain tumor classification model with MLflow tracking
+    FINAL OPTIMIZED Training - Balanced approach based on best results
     """
     
     def __init__(self, config: TrainingConfig, mlflow_config: MLflowConfig):
-        """
-        Initialize Training component
-        
-        Args:
-            config (TrainingConfig): Configuration for model training
-            mlflow_config (MLflowConfig): Configuration for MLflow tracking
-        """
         self.config = config
         self.mlflow_config = mlflow_config
     
-    
     def get_base_model(self):
-        """
-        Load the prepared base model with custom head
-        """
+        """Load the prepared base model"""
         try:
-            logger.info(f"Loading base model from: {self.config.updated_base_model_path}")
+            logger.info(f"Loading improved model from: {self.config.updated_base_model_path}")
             
             self.model = tf.keras.models.load_model(
                 str(self.config.updated_base_model_path)
             )
             
-            logger.info("✓ Model loaded successfully")
-            logger.info(f"✓ Model input shape: {self.model.input_shape}")
-            logger.info(f"✓ Model output shape: {self.model.output_shape}")
+            logger.info("Improved model loaded successfully")
+            logger.info(f"Model input shape: {self.model.input_shape}")
+            logger.info(f"Model output shape: {self.model.output_shape}")
             
         except Exception as e:
             logger.exception(e)
             raise e
     
-    
     def train_valid_generator(self):
-        """
-        Create data generators for training and validation
-        """
+        """Create OPTIMIZED data generators"""
         try:
-            logger.info("Setting up data generators...")
+            logger.info("Setting up OPTIMIZED data generators...")
             
-            # Data augmentation configuration for training
             if self.config.params_is_augmentation:
-                logger.info("✓ Data augmentation enabled")
+                logger.info("Optimized augmentation enabled - BALANCED approach")
                 train_datagen = tf.keras.preprocessing.image.ImageDataGenerator(
                     rescale=1./255,
-                    rotation_range=20,
-                    width_shift_range=0.2,
-                    height_shift_range=0.2,
-                    shear_range=0.2,
-                    zoom_range=0.3,
+                    rotation_range=30,
+                    width_shift_range=0.3,
+                    height_shift_range=0.3,
+                    shear_range=0.3,
+                    zoom_range=0.35,
                     horizontal_flip=True,
                     vertical_flip=True,
-                    brightness_range=[0.8,1.2],
+                    brightness_range=[0.7, 1.3],
                     fill_mode='nearest',
-                    validation_split=0.2  # 20% for validation
+                    validation_split=0.2
                 )
             else:
-                logger.info("✓ No data augmentation")
                 train_datagen = tf.keras.preprocessing.image.ImageDataGenerator(
                     rescale=1./255,
                     validation_split=0.2
@@ -98,187 +85,196 @@ class Training:
                 seed=42
             )
             
-            # Log dataset information
             logger.info("="*70)
             logger.info("DATASET INFORMATION")
             logger.info("="*70)
-            logger.info(f"✓ Training samples: {self.train_generator.samples}")
-            logger.info(f"✓ Validation samples: {self.validation_generator.samples}")
-            logger.info(f"✓ Number of classes: {self.train_generator.num_classes}")
-            logger.info(f"✓ Class indices: {self.train_generator.class_indices}")
-            logger.info(f"✓ Batch size: {self.config.params_batch_size}")
-            logger.info(f"✓ Steps per epoch: {self.train_generator.samples // self.config.params_batch_size}")
-            logger.info(f"✓ Validation steps: {self.validation_generator.samples // self.config.params_batch_size}")
+            logger.info(f"Training samples: {self.train_generator.samples}")
+            logger.info(f"Validation samples: {self.validation_generator.samples}")
+            logger.info(f"Number of classes: {self.train_generator.num_classes}")
+            logger.info(f"Class indices: {self.train_generator.class_indices}")
+            logger.info(f"Batch size: {self.config.params_batch_size}")
             logger.info("="*70)
             
         except Exception as e:
             logger.exception(e)
             raise e
-    
     
     @staticmethod
     def save_model(path: Path, model: tf.keras.Model):
-        """
-        Save the trained model
-        
-        Args:
-            path (Path): Path to save the model
-            model (tf.keras.Model): Trained model
-        """
+        """Save the trained model"""
         try:
             model.save(str(path))
-            logger.info(f"✓ Model saved at: {path}")
+            logger.info(f"Model saved at: {path}")
         except Exception as e:
             logger.exception(e)
             raise e
     
-    
     def train(self):
-        """
-        Train the model with MLflow tracking
-        """
+        """Train with FINAL OPTIMIZED class weights"""
         try:
             logger.info("="*70)
-            logger.info("STARTING MODEL TRAINING WITH MLFLOW")
+            logger.info("STARTING FINAL OPTIMIZED TRAINING")
             logger.info("="*70)
             
-            # Calculate steps
             steps_per_epoch = self.train_generator.samples // self.train_generator.batch_size
             validation_steps = self.validation_generator.samples // self.validation_generator.batch_size
             
             logger.info(f"\nTraining Configuration:")
-            logger.info(f"  → Epochs: {self.config.params_epochs}")
-            logger.info(f"  → Batch Size: {self.config.params_batch_size}")
-            logger.info(f"  → Steps per Epoch: {steps_per_epoch}")
-            logger.info(f"  → Validation Steps: {validation_steps}")
-            logger.info(f"  → Training Samples: {self.train_generator.samples}")
-            logger.info(f"  → Validation Samples: {self.validation_generator.samples}")
+            logger.info(f"  Epochs: {self.config.params_epochs}")
+            logger.info(f"  Batch Size: {self.config.params_batch_size}")
+            logger.info(f"  Steps per Epoch: {steps_per_epoch}")
+            logger.info(f"  Validation Steps: {validation_steps}")
             
-            # ============================================================
-            # MLFLOW: Start Run with DagsHub
-            # ============================================================
+        # ==================== FINAL OPTIMIZED CLASS WEIGHTS ====================
             logger.info("\n" + "="*70)
-            logger.info("MLFLOW: Starting Experiment Tracking with DagsHub")
+            logger.info("CALCULATING FINAL OPTIMIZED CLASS WEIGHTS")
+            logger.info("="*70)
+
+            # Get base balanced weights
+            class_weights_array = class_weight.compute_class_weight(
+                class_weight='balanced',
+                classes=np.unique(self.train_generator.classes),
+                y=self.train_generator.classes
+            )
+
+            class_weight_dict = dict(enumerate(class_weights_array))
+
+            # FINAL OPTIMIZED: Based on Run 1 results (which worked best)
+            # Analysis: 3x was too weak for Glioma, 6x hurt other classes
+            # Optimal: 4.2x Glioma, reduce No Tumor more aggressively
+            performance_boost_factors = {
+                0: 4.2,  # Glioma: Optimal boost (between 3x and 6x)
+                1: 1.0,  # Meningioma: Keep balanced (was perfect at 96%)
+                2: 0.45, # No Tumor: Reduce more (was still over-predicting)
+                3: 1.6   # Pituitary: Slight increase (86% → target 90%)
+            }
+
+            # Apply performance adjustments
+            logger.info("Base balanced weights + FINAL OPTIMIZED adjustments:")
+            for class_idx, weight in class_weight_dict.items():
+                class_name = list(self.train_generator.class_indices.keys())[
+                    list(self.train_generator.class_indices.values()).index(class_idx)
+                ]
+                
+                original_weight = weight
+                boost_factor = performance_boost_factors.get(class_idx, 1.0)
+                adjusted_weight = original_weight * boost_factor
+                class_weight_dict[class_idx] = adjusted_weight
+                
+                logger.info(f"  {class_name} (class {class_idx}): {original_weight:.4f} → {adjusted_weight:.4f} (x{boost_factor})")
+
+            logger.info("="*70)
+            logger.info("STRATEGY: Balanced optimization - 4.2x Glioma, control No Tumor")
+        # =================================================================
+            
+            # Initialize MLflow
+            logger.info("\n" + "="*70)
+            logger.info("MLFLOW: Starting Experiment")
             logger.info("="*70)
             
-            # Initialize DagsHub
             dagshub.init(
                 repo_owner='rahul22106',
                 repo_name='Brain-Tumor-Classification',
                 mlflow=True
             )
-            logger.info("✓ DagsHub initialized successfully")
             
-            # Set MLflow tracking URI (if provided)
             if self.mlflow_config.tracking_uri:
                 mlflow.set_tracking_uri(self.mlflow_config.tracking_uri)
-                logger.info(f"✓ MLflow Tracking URI: {self.mlflow_config.tracking_uri}")
-            else:
-                logger.info("✓ MLflow Tracking: Local (mlruns folder)")
             
-            # Set experiment name
             mlflow.set_experiment(self.mlflow_config.experiment_name)
             
-            # Generate run name
-            run_name = f"{self.mlflow_config.run_name_prefix}_batch{self.config.params_batch_size}_epoch{self.config.params_epochs}"
+            run_name = f"{self.mlflow_config.run_name_prefix}_final_optimized_v4_batch{self.config.params_batch_size}"
             
             with mlflow.start_run(run_name=run_name) as run:
                 run_id = run.info.run_id
-                logger.info(f"✓ MLflow Run ID: {run_id}")
-                logger.info(f"✓ Run Name: {run_name}")
-                logger.info(f"✓ Experiment: {self.mlflow_config.experiment_name}")
-                logger.info(f"✓ View on DagsHub: https://dagshub.com/rahul22106/Brain-Tumor-Classification/experiments")
+                logger.info(f"MLflow Run ID: {run_id}")
+                logger.info(f"Strategy: FINAL OPTIMIZED - BALANCED PERFORMANCE")
                 
-                # ============================================================
-                # MLFLOW: Log Parameters
-                # ============================================================
-                logger.info("\nLogging Parameters to MLflow...")
-
-                mlflow.log_param("model_architecture", "MobileNetV2")
-                mlflow.log_param("image_size", f"{self.config.params_image_size[0]}x{self.config.params_image_size[1]}")
+                # Log Parameters
+                mlflow.log_param("strategy", "final_optimized_balanced_v4")
+                mlflow.log_param("model_architecture", "MobileNetV2_Improved")
                 mlflow.log_param("batch_size", self.config.params_batch_size)
                 mlflow.log_param("epochs", self.config.params_epochs)
-
-                # ✅ FIX: Use config learning rate instead of model.optimizer
                 mlflow.log_param("learning_rate", self.config.params_learning_rate)
-
-                mlflow.log_param("augmentation", str(self.config.params_is_augmentation))
-                mlflow.log_param("optimizer", "Adam")
-                mlflow.log_param("loss_function", "categorical_crossentropy")
-                mlflow.log_param("train_samples", int(self.train_generator.samples))
-                mlflow.log_param("val_samples", int(self.validation_generator.samples))
-                mlflow.log_param("num_classes", int(self.train_generator.num_classes))
-                # Convert list to comma-separated string
-                mlflow.log_param("class_names", ",".join(self.train_generator.class_indices.keys()))
-
-                logger.info("✓ Parameters logged to MLflow")
-                                
-                # ============================================================
-                # MLFLOW: Set Tags
-                # ============================================================
-                # Set tags from config
+                mlflow.log_param("dropout", "0.35_0.35_0.3")
+                mlflow.log_param("l2_reg", "0.008_0.008_0.005")
+                mlflow.log_param("frozen_layers", 100)
+                mlflow.log_param("gradient_clipping", 1.0)
+                mlflow.log_param("class_weights", str(class_weight_dict))
+                mlflow.log_param("augmentation", "optimized_balanced")
+                mlflow.log_param("glioma_boost", "4.2x_optimal")
+                
+                # Set Tags
                 for tag_key, tag_value in self.mlflow_config.tags.items():
-                                    mlflow.set_tag(tag_key, tag_value)
-                                
-                logger.info("✓ Tags set in MLflow")
-                                
-                # ============================================================
-                # Callbacks Setup
-                # ============================================================
-                logger.info("\nSetting up enhanced callbacks...")
+                    mlflow.set_tag(tag_key, tag_value)
+                mlflow.set_tag("training_strategy", "final_optimized_v4")
+                mlflow.set_tag("focus", "balanced_all_classes")
+                
+                # Callbacks
+                logger.info("\nSetting up OPTIMIZED callbacks...")
 
-                # Model checkpoint - save best model
                 checkpoint_path = str(self.config.trained_model_path).replace('.keras', '_best.keras')
                 checkpoint = tf.keras.callbacks.ModelCheckpoint(
                     filepath=checkpoint_path,
-                    monitor='val_accuracy',  # Track accuracy
+                    monitor='val_accuracy',
                     save_best_only=True,
                     mode='max',
                     verbose=1
                 )
-                logger.info(f"✓ ModelCheckpoint: {checkpoint_path}")
 
-                # Early stopping with more patience
+                # OPTIMIZED: Early stopping to prevent overfitting
                 early_stop = tf.keras.callbacks.EarlyStopping(
-                    monitor='val_accuracy',  # Monitor accuracy instead of loss
-                    patience=8,            # Increased patience
+                    monitor='val_accuracy',  
+                    patience=10,
                     restore_best_weights=True,
                     mode='max',
-                    verbose=1
+                    verbose=1,
+                    min_delta=0.001
                 )
-                logger.info("✓ EarlyStopping: patience=12 (monitoring val_accuracy)")
+                logger.info("EarlyStopping: monitor=val_accuracy, patience=10, min_delta=0.001")
 
-                # Reduce learning rate on plateau with better settings
                 reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(
-                    monitor='val_accuracy',  # Monitor accuracy
-                    factor=0.5,             # Less aggressive reduction
-                    patience=5,             # More patience
+                    monitor='val_loss',
+                    factor=0.3,
+                    patience=3,
                     min_lr=1e-7,
-                    mode='max',
+                    mode='min',
                     verbose=1
                 )
-                logger.info("✓ ReduceLROnPlateau: factor=0.5, patience=5")
+                logger.info("ReduceLROnPlateau: factor=0.3, patience=3")
 
-                # CSV Logger
                 csv_logger = tf.keras.callbacks.CSVLogger(
-                    filename=str(self.config.root_dir / 'training_log.csv'),
+                    filename=str(self.config.root_dir / 'training_log_final_v4.csv'),
                     append=True
                 )
-                logger.info(f"✓ CSVLogger: {self.config.root_dir / 'training_log.csv'}")
 
-                # TensorBoard
                 tensorboard = tf.keras.callbacks.TensorBoard(
-                    log_dir=str(self.config.root_dir / 'tensorboard_logs'),
-                    histogram_freq=1,
-                    update_freq='epoch'
+                    log_dir=str(self.config.root_dir / 'tensorboard_logs_final_v4'),
+                    histogram_freq=1
                 )
-                logger.info(f"✓ TensorBoard: {self.config.root_dir / 'tensorboard_logs'}")
                 
-                # ============================================================
+                # Balanced performance monitor
+                class BalancedMonitor(tf.keras.callbacks.Callback):
+                    def on_epoch_end(self, epoch, logs=None):
+                        train_acc = logs.get('accuracy', 0)
+                        val_acc = logs.get('val_accuracy', 0)
+                        gap = train_acc - val_acc
+                        
+                        if gap > 0.15:
+                            logger.warning(f"⚠️ OVERFITTING: Train-Val gap = {gap*100:.1f}%")
+                        elif gap < -0.05:
+                            logger.warning(f"⚠️ UNDERFITTING: Val > Train by {abs(gap)*100:.1f}%")
+                        else:
+                            logger.info(f"✓ Good balance")
+                        
+                        logger.info(f"Epoch {epoch+1}: Train={train_acc*100:.2f}% | Val={val_acc*100:.2f}% | Gap={gap*100:.1f}%")
+                        logger.info(f"  Strategy: 4.2x Glioma (optimal), 0.45x No Tumor (controlled)")
+                
+                balanced_monitor = BalancedMonitor()
+                
                 # Start Training
-                # ============================================================
                 logger.info("\n" + "="*70)
-                logger.info("TRAINING STARTED")
+                logger.info("TRAINING STARTED - FINAL OPTIMIZED MODE")
                 logger.info("="*70)
                 
                 start_time = time.time()
@@ -289,7 +285,8 @@ class Training:
                     steps_per_epoch=steps_per_epoch,
                     validation_data=self.validation_generator,
                     validation_steps=validation_steps,
-                    callbacks=[checkpoint, early_stop, reduce_lr, csv_logger, tensorboard],
+                    class_weight=class_weight_dict,
+                    callbacks=[checkpoint, early_stop, reduce_lr, csv_logger, tensorboard, balanced_monitor],
                     verbose=1
                 )
                 
@@ -299,15 +296,9 @@ class Training:
                 logger.info("\n" + "="*70)
                 logger.info("TRAINING COMPLETED")
                 logger.info("="*70)
-                logger.info(f"✓ Total training time: {training_time/60:.2f} minutes")
+                logger.info(f"Total training time: {training_time/60:.2f} minutes")
                 
-                # ============================================================
-                # MLFLOW: Log Final Metrics
-                # ============================================================
-                logger.info("\n" + "="*70)
-                logger.info("LOGGING FINAL METRICS TO MLFLOW")
-                logger.info("="*70)
-                
+                # Log Final Metrics
                 final_train_acc = history.history['accuracy'][-1]
                 final_val_acc = history.history['val_accuracy'][-1]
                 final_train_loss = history.history['loss'][-1]
@@ -316,76 +307,41 @@ class Training:
                 best_val_acc = max(history.history['val_accuracy'])
                 best_epoch = history.history['val_accuracy'].index(best_val_acc) + 1
                 
-                # Log final metrics - use simple metric logging without steps
+                train_val_gap = final_train_acc - final_val_acc
+                
                 mlflow.log_metric("final_train_accuracy", final_train_acc)
                 mlflow.log_metric("final_val_accuracy", final_val_acc)
                 mlflow.log_metric("final_train_loss", final_train_loss)
                 mlflow.log_metric("final_val_loss", final_val_loss)
                 mlflow.log_metric("best_val_accuracy", best_val_acc)
+                mlflow.log_metric("train_val_gap", train_val_gap)
                 mlflow.log_metric("training_time_minutes", training_time/60)
                 
-                logger.info("✓ Final metrics logged to MLflow")
-                
-                # ============================================================
                 # Training Summary
-                # ============================================================
                 logger.info("\n" + "="*70)
-                logger.info("TRAINING SUMMARY")
+                logger.info("FINAL TRAINING SUMMARY")
                 logger.info("="*70)
-                
                 logger.info(f"Final Training Accuracy: {final_train_acc*100:.2f}%")
                 logger.info(f"Final Validation Accuracy: {final_val_acc*100:.2f}%")
-                logger.info(f"Final Training Loss: {final_train_loss:.4f}")
-                logger.info(f"Final Validation Loss: {final_val_loss:.4f}")
-                logger.info(f"\nBest Validation Accuracy: {best_val_acc*100:.2f}% (Epoch {best_epoch})")
+                logger.info(f"Train-Val Gap: {train_val_gap*100:.1f}%")
+                logger.info(f"Best Validation Accuracy: {best_val_acc*100:.2f}% (Epoch {best_epoch})")
+                logger.info(f"Class Weights: Glioma=4.2x, Meningioma=1.0x, NoTumor=0.45x, Pituitary=1.6x")
                 
-                # ============================================================
+                if train_val_gap > 0.1:
+                    logger.warning("⚠️ OVERFITTING DETECTED - Consider more regularization")
+                elif train_val_gap < -0.05:
+                    logger.warning("⚠️ UNDERFITTING - Model can learn more")
+                else:
+                    logger.info("✓ Good generalization achieved")
+                
                 # Save Model
-                # ============================================================
-                logger.info("\n" + "="*70)
-                logger.info("SAVING MODEL")
-                logger.info("="*70)
-                
                 self.save_model(
                     path=self.config.trained_model_path,
                     model=self.model
                 )
-                logger.info(f"✓ Final model saved")
                 
-                # ============================================================
-                # MLFLOW: Log Model Artifacts (Optional - DagsHub might not support all operations)
-                # ============================================================
-                logger.info("\n" + "="*70)
-                logger.info("LOGGING ARTIFACTS TO MLFLOW")
-                logger.info("="*70)
-                
-                try:
-                    # Log the model (simplified approach)
-                    mlflow.tensorflow.log_model(
-                        self.model,
-                        artifact_path="model"
-                    )
-                    logger.info("✓ Model logged to MLflow")
-                except Exception as e:
-                    logger.warning(f"Could not log model to MLflow: {e}")
-                    logger.info("Continuing without model logging...")
-                
-                try:
-                    # Log training history CSV
-                    mlflow.log_artifact(str(self.config.root_dir / 'training_log.csv'))
-                    logger.info("✓ Training log CSV logged to MLflow")
-                except Exception as e:
-                    logger.warning(f"Could not log training log: {e}")
-                
-                # ============================================================
-                # MLFLOW: End Run
-                # ============================================================
-                logger.info("\n" + "="*70)
-                logger.info("MLFLOW: Experiment Tracking Completed")
-                logger.info("="*70)
-                logger.info(f"✓ Run ID: {run_id}")
-                logger.info(f"✓ View on DagsHub: https://dagshub.com/rahul22106/Brain-Tumor-Classification/experiments")
-                logger.info(f"✓ Or MLflow UI: mlflow ui → http://localhost:5000")
+                logger.info(f"\n✓ Best model saved: {checkpoint_path}")
+                logger.info(f"✓ Final model saved: {self.config.trained_model_path}")
                 
             return history
             
@@ -393,38 +349,25 @@ class Training:
             logger.exception(e)
             raise e
     
-    
     def initiate_model_training(self):
-        """
-        Main method to execute model training with MLflow
-        """
+        """Main training execution"""
         try:
             logger.info("="*70)
-            logger.info("INITIALIZING MODEL TRAINING WITH MLFLOW")
+            logger.info("FINAL OPTIMIZED BALANCED TRAINING PIPELINE")
             logger.info("="*70)
             
-            # Step 1: Load base model
-            logger.info("\n>>> Step 1: Load Base Model")
+            logger.info("\n>>> Step 1: Load Improved Model")
             self.get_base_model()
             
-            # Step 2: Setup data generators
-            logger.info("\n>>> Step 2: Setup Data Generators")
+            logger.info("\n>>> Step 2: Setup Optimized Augmentation")
             self.train_valid_generator()
             
-            # Step 3: Train model with MLflow tracking
-            logger.info("\n>>> Step 3: Train Model with MLflow Tracking")
+            logger.info("\n>>> Step 3: Train with Optimal Weights (4.2x Glioma)")
             history = self.train()
             
             logger.info("\n" + "="*70)
-            logger.info("✓ MODEL TRAINING COMPLETED SUCCESSFULLY")
+            logger.info("TRAINING COMPLETED - FINAL OPTIMIZED VERSION")
             logger.info("="*70)
-            
-            logger.info("\nNext Steps:")
-            logger.info("  1. View MLflow UI: mlflow ui")
-            logger.info("  2. Check training logs: artifacts/training/training_log.csv")
-            logger.info("  3. View TensorBoard: tensorboard --logdir artifacts/training/tensorboard_logs")
-            logger.info("  4. Evaluate model on test set (Stage 04)")
-            logger.info("  5. Best model: " + str(self.config.trained_model_path).replace('.keras', '_best.keras'))
             
             return history
             
