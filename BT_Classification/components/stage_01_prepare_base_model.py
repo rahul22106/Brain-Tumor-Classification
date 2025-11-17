@@ -44,7 +44,7 @@ class PrepareBaseModel:
         - Reduced frozen layers (100 instead of 130) for more trainable parameters
         - Moderate dropout (0.35, 0.35, 0.3) instead of aggressive (0.45, 0.45, 0.4)
         - Lighter L2 regularization (0.008) for better learning
-        - Higher learning rate (0.001) for faster convergence
+        - Higher learning rate (0.0005) for faster convergence
         """
         try:
             # Strategy: Unfreeze more layers for better learning
@@ -106,7 +106,6 @@ class PrepareBaseModel:
                 outputs=prediction
             )
             
-            # IMPROVED: Higher learning rate (0.001 instead of 0.0005) for better convergence
             optimizer = tf.keras.optimizers.Adam(
                 learning_rate=learning_rate,
                 clipnorm=1.0
@@ -142,7 +141,7 @@ class PrepareBaseModel:
                 classes=self.config.params_classes,
                 freeze_all=False,
                 freeze_till=100,  # CHANGED: Reduced from 130
-                learning_rate= 0.001  # CHANGED: Increased from 0.0005
+                learning_rate= 0.0005  
             )
             
             trainable_count = sum([tf.keras.backend.count_params(w) for w in self.full_model.trainable_weights])
@@ -187,7 +186,7 @@ class PrepareBaseModel:
             logger.info(f"  Trainable layers: ~55 layers (INCREASED from ~25)")
             logger.info(f"  Dropout: 0.35, 0.35, 0.3 (REDUCED from 0.45, 0.45, 0.4)")
             logger.info(f"  L2 regularization: 0.008, 0.008, 0.005 (LIGHTER)")
-            logger.info(f"  Learning rate: 0.001 (INCREASED from 0.0005)")
+            logger.info(f"  Learning rate: 0.0005 (INCREASED from 0.0005)")
             logger.info(f"  Gradient clipping: 1.0")
             logger.info(f"  Strategy: BALANCED REGULARIZATION + ENHANCED LEARNING CAPACITY")
             

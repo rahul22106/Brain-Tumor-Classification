@@ -48,13 +48,13 @@ class Training:
                 train_datagen = tf.keras.preprocessing.image.ImageDataGenerator(
                     rescale=1./255,
                     rotation_range=30,
-                    width_shift_range=0.3,
-                    height_shift_range=0.3,
-                    shear_range=0.3,
-                    zoom_range=0.35,
+                    width_shift_range=0.25,
+                    height_shift_range=0.25,
+                    shear_range=0.25,
+                    zoom_range=0.3,
                     horizontal_flip=True,
                     vertical_flip=True,
-                    brightness_range=[0.7, 1.3],
+                    brightness_range=[0.8, 1.2],
                     fill_mode='nearest',
                     validation_split=0.2
                 )
@@ -147,7 +147,7 @@ class Training:
             logger.info("CALCULATING FIXED CLASS WEIGHTS")
             logger.info("="*70)
             logger.info("PROBLEM IDENTIFIED: No Tumor was 99% recall (overpredicting)")
-            logger.info("SOLUTION: Reduce No Tumor weight from 0.45 to 0.25")
+            logger.info("SOLUTION: Reduce No Tumor weight from 0.45 to 0.35")
             logger.info("="*70)
 
             # Get base balanced weights
@@ -161,10 +161,10 @@ class Training:
 
             # CRITICAL FIX: Adjusted weights to fix No Tumor overprediction
             performance_boost_factors = {
-                0: 5.0,   # Glioma: INCREASED from 4.2 to 5.0 (need more boost)
-                1: 1.0,   # Meningioma: Keep balanced (was perfect)
-                2: 0.25,  # No Tumor: DRASTICALLY REDUCED from 0.45 to 0.25 (KEY FIX!)
-                3: 1.6    # Pituitary: Keep same (was good)
+                0: 4.5,  
+                1: 0.8,   
+                2: 0.35,  
+                3: 1.6    
             }
 
             # Apply performance adjustments
@@ -183,8 +183,8 @@ class Training:
 
             logger.info("\n" + "="*70)
             logger.info("STRATEGY: Stop No Tumor overprediction")
-            logger.info("  ✓ Glioma: 5.0x (up from 4.2x)")
-            logger.info("  ✓ No Tumor: 0.25x (down from 0.45x) - KEY FIX")
+            logger.info("  ✓ Glioma: 4.5x (up from 4.2x)")
+            logger.info("  ✓ No Tumor: 0.35x (down from 0.45x) - KEY FIX")
             logger.info("  ✓ This should give Glioma 55-65% recall")
             logger.info("  ✓ And No Tumor 85-90% recall (not 99%!)")
             logger.info("="*70)
@@ -225,8 +225,8 @@ class Training:
                 mlflow.log_param("gradient_clipping", 1.0)
                 mlflow.log_param("class_weights", str(class_weight_dict))
                 mlflow.log_param("augmentation", "optimized_balanced")
-                mlflow.log_param("glioma_boost", "5.0x_fixed")
-                mlflow.log_param("no_tumor_weight", "0.25x_reduced")
+                mlflow.log_param("glioma_boost", "4.5x_fixed")
+                mlflow.log_param("no_tumor_weight", "0.35x_reduced")
                 mlflow.log_param("random_seed", 42)
                 mlflow.log_param("reproducible", "True")
                 
@@ -294,7 +294,7 @@ class Training:
                             logger.info(f"✓ Good balance")
                         
                         logger.info(f"Epoch {epoch+1}: Train={train_acc*100:.2f}% | Val={val_acc*100:.2f}% | Gap={gap*100:.1f}%")
-                        logger.info(f"  Fixed weights: Glioma=5.0x, NoTumor=0.25x (no overprediction)")
+                        logger.info(f"  Fixed weights: Glioma=4.5x, NoTumor=0.35x (no overprediction)")
                 
                 fixed_monitor = FixedMonitor()
                 
@@ -351,11 +351,11 @@ class Training:
                 logger.info(f"Final Validation Accuracy: {final_val_acc*100:.2f}%")
                 logger.info(f"Train-Val Gap: {train_val_gap*100:.1f}%")
                 logger.info(f"Best Validation Accuracy: {best_val_acc*100:.2f}% (Epoch {best_epoch})")
-                logger.info(f"Class Weights: Glioma=5.0x, Meningioma=1.0x, NoTumor=0.25x, Pituitary=1.6x")
+                logger.info(f"Class Weights: Glioma=7.0x, Meningioma=0.8x, NoTumor=0.25x, Pituitary=1.6x")
                 logger.info("\nFIXES APPLIED:")
                 logger.info("  ✓ Random seed fixed (42) - reproducible results")
-                logger.info("  ✓ No Tumor weight reduced (0.45 → 0.25)")
-                logger.info("  ✓ Glioma weight increased (4.2 → 5.0)")
+                logger.info("  ✓ No Tumor weight reduced (0.45 → 0.35)")
+                logger.info("  ✓ Glioma weight increased (4.2 )")
                 logger.info("\nEXPECTED IMPROVEMENTS:")
                 logger.info("  ✓ Glioma recall: 55-65% (was 34%)")
                 logger.info("  ✓ No Tumor recall: 85-90% (was 99%)")
@@ -397,7 +397,7 @@ class Training:
             logger.info("\n>>> Step 2: Setup Reproducible Data Generators")
             self.train_valid_generator()
             
-            logger.info("\n>>> Step 3: Train with Fixed Weights (5.0x Glioma, 0.25x No Tumor)")
+            logger.info("\n>>> Step 3: Train with Fixed Weights (4.5x Glioma, 0.35x No Tumor)")
             history = self.train()
             
             logger.info("\n" + "="*70)

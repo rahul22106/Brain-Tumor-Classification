@@ -2,7 +2,7 @@
 IMAGE_SIZE: [224, 224, 3]  # MobileNetV2 input size
 BATCH_SIZE: 8
 EPOCHS: 35
-LEARNING_RATE: 0.001
+LEARNING_RATE: 0.0005
 CLASSES: 4  # Number of tumor classes (glioma, meningioma, notumor, pituitary)
 
 # Base Model Parameters
