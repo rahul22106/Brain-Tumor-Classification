@@ -1,0 +1,162 @@
+schema: '2.0'
+stages:
+  data_ingestion:
+    cmd: python -c "from BT_Classification.pipeline import 
+      DataIngestionTrainingPipeline; DataIngestionTrainingPipeline().main()"
+    deps:
+    - path: BT_Classification/components/stage_00_data_ingestion.py
+      hash: md5
+      md5: 670f668b82330f8216896b35643611f5
+      size: 11688
+    - path: BT_Classification/seed_config.py
+      hash: md5
+      md5: b1e01f8b4bf2689e4e8f4a0267d405f1
+      size: 2276
+    - path: config/config.yaml
+      hash: md5
+      md5: 1fbdc842b8de1b00165ee1ad8ab5b74d
+      size: 1513
+    outs:
+    - path: artifacts/data_ingestion/testing
+      hash: md5
+      md5: 8b17d7ee8019891d6d308f570a6c2b2b.dir
+      size: 13375930
+      nfiles: 394
+    - path: artifacts/data_ingestion/training
+      hash: md5
+      md5: 115ba59527aaaa7bb4d5009e3ef34067.dir
+      size: 79703413
+      nfiles: 2870
+  prepare_base_model:
+    cmd: python -c "from BT_Classification.pipeline import 
+      PrepareBaseModelTrainingPipeline; 
+      PrepareBaseModelTrainingPipeline().main()"
+    deps:
+    - path: BT_Classification/components/stage_01_prepare_base_model.py
+      hash: md5
+      md5: 9d650c6e953d47f3463ef8bcbd697781
+      size: 9413
+    - path: BT_Classification/seed_config.py
+      hash: md5
+      md5: b1e01f8b4bf2689e4e8f4a0267d405f1
+      size: 2276
+    - path: config/config.yaml
+      hash: md5
+      md5: 1fbdc842b8de1b00165ee1ad8ab5b74d
+      size: 1513
+    - path: params.yaml
+      hash: md5
+      md5: 0f7b4f8e176ed0c456e9816b6094decb
+      size: 311
+    params:
+      params.yaml:
+        CLASSES: 4
+        IMAGE_SIZE:
+        - 224
+        - 224
+        - 3
+        INCLUDE_TOP: false
+        LEARNING_RATE: 0.001
+        WEIGHTS: imagenet
+    outs:
+    - path: artifacts/prepare_base_model/base_model.keras
+      hash: md5
+      md5: c187d3a57a6d25c2b6765dc4c1bb3a75
+      size: 9601617
+    - path: artifacts/prepare_base_model/base_model_updated.keras
+      hash: md5
+      md5: c27368aabb4b66913a138554040be4dd
+      size: 11092818
+  training:
+    cmd: python -c "from BT_Classification.pipeline import 
+      ModelTrainingPipeline; ModelTrainingPipeline().main()"
+    deps:
+    - path: BT_Classification/components/stage_02_model_trainer.py
+      hash: md5
+      md5: fc59f20ec5138e66cdffda0f25712832
+      size: 19082
+    - path: BT_Classification/seed_config.py
+      hash: md5
+      md5: b1e01f8b4bf2689e4e8f4a0267d405f1
+      size: 2276
+    - path: artifacts/data_ingestion/training
+      hash: md5
+      md5: 115ba59527aaaa7bb4d5009e3ef34067.dir
+      size: 79703413
+      nfiles: 2870
+    - path: artifacts/prepare_base_model/base_model_updated.keras
+      hash: md5
+      md5: c27368aabb4b66913a138554040be4dd
+      size: 11092818
+    - path: config/config.yaml
+      hash: md5
+      md5: 1fbdc842b8de1b00165ee1ad8ab5b74d
+      size: 1513
+    - path: params.yaml
+      hash: md5
+      md5: 0f7b4f8e176ed0c456e9816b6094decb
+      size: 311
+    params:
+      params.yaml:
+        AUGMENTATION: true
+        BATCH_SIZE: 8
+        EPOCHS: 35
+        IMAGE_SIZE:
+        - 224
+        - 224
+        - 3
+        LEARNING_RATE: 0.001
+    outs:
+    - path: artifacts/training/model.keras
+      hash: md5
+      md5: a5f9c6b53b9b4d11ef127b5349305e5f
+      size: 28921057
+  evaluation:
+    cmd: python -c "from BT_Classification.pipeline import 
+      ModelEvaluationPipeline; ModelEvaluationPipeline().main()"
+    deps:
+    - path: BT_Classification/components/stage_03_model_evaluation.py
+      hash: md5
+      md5: 2b6d27bb13495fad2c5861810892a0eb
+      size: 17471
+    - path: BT_Classification/seed_config.py
+      hash: md5
+      md5: b1e01f8b4bf2689e4e8f4a0267d405f1
+      size: 2276
+    - path: artifacts/data_ingestion/testing
+      hash: md5
+      md5: 8b17d7ee8019891d6d308f570a6c2b2b.dir
+      size: 13375930
+      nfiles: 394
+    - path: artifacts/training/model.keras
+      hash: md5
+      md5: a5f9c6b53b9b4d11ef127b5349305e5f
+      size: 28921057
+    - path: config/config.yaml
+      hash: md5
+      md5: 1fbdc842b8de1b00165ee1ad8ab5b74d
+      size: 1513
+    - path: params.yaml
+      hash: md5
+      md5: 0f7b4f8e176ed0c456e9816b6094decb
+      size: 311
+    params:
+      params.yaml:
+        BATCH_SIZE: 8
+        IMAGE_SIZE:
+        - 224
+        - 224
+        - 3
+    outs:
+    - path: artifacts/evaluation/confusion_matrix.png
+      hash: md5
+      md5: e09d978023ba2cacc95d4f50316f3e11
+      size: 135241
+    - path: artifacts/evaluation/roc_curves.png
+      hash: md5
+      md5: 4366088581135c0a19618da9054bfcec
+      size: 221328
+    - path: artifacts/evaluation/scores.json
+      hash: md5
+      md5: 2723c655b3d607c9f24d0db65ee8c424
+      size: 1383

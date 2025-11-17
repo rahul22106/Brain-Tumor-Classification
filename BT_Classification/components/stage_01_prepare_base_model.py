@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import tensorflow as tf
+from BT_Classification.seed_config import GLOBAL_SEED
 from BT_Classification import logger
 from BT_Classification.entity import PrepareBaseModelConfig
 
@@ -141,7 +142,7 @@ class PrepareBaseModel:
                 classes=self.config.params_classes,
                 freeze_all=False,
                 freeze_till=100,  # CHANGED: Reduced from 130
-                learning_rate=0.001  # CHANGED: Increased from 0.0005
+                learning_rate= 0.001  # CHANGED: Increased from 0.0005
             )
             
             trainable_count = sum([tf.keras.backend.count_params(w) for w in self.full_model.trainable_weights])

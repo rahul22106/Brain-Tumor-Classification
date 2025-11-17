@@ -4,10 +4,10 @@ import zipfile
 import shutil
 from pathlib import Path
 import urllib.request as request
+from BT_Classification.seed_config import GLOBAL_SEED  # ← ADD THIS LINE
 from BT_Classification import logger
 from BT_Classification.utils.common import get_size
 from BT_Classification.entity import DataIngestionConfig
-
 
 class DataIngestion:
     """

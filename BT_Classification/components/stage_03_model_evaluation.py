@@ -10,6 +10,7 @@ from sklearn.metrics import classification_report, confusion_matrix, roc_auc_sco
 import matplotlib.pyplot as plt
 import seaborn as sns
 from BT_Classification import logger
+from BT_Classification.seed_config import GLOBAL_SEED
 from BT_Classification.entity import EvaluationConfig, MLflowConfig
 from BT_Classification.utils.common import save_json
 

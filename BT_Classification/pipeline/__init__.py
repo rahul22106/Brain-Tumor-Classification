@@ -1,4 +1,5 @@
 from BT_Classification.config.configuration import ConfigurationManager
+from BT_Classification.seed_config import GLOBAL_SEED
 from BT_Classification.components.stage_00_data_ingestion import DataIngestion
 from BT_Classification.components.stage_01_prepare_base_model import PrepareBaseModel
 from BT_Classification.components.stage_02_model_trainer import Training

@@ -1,0 +1,70 @@
+# ============================================================================
+# DVC Pipeline Configuration - WITH REPRODUCIBLE SEEDING
+# ============================================================================
+
+stages:
+  data_ingestion:
+    cmd: python -c "from BT_Classification.pipeline import DataIngestionTrainingPipeline; DataIngestionTrainingPipeline().main()"
+    deps:
+      - BT_Classification/components/stage_00_data_ingestion.py
+      - BT_Classification/seed_config.py  # ADDED
+      - config/config.yaml
+    outs:
+      - artifacts/data_ingestion/training:
+          cache: false
+      - artifacts/data_ingestion/testing:
+          cache: false
+
+  prepare_base_model:
+    cmd: python -c "from BT_Classification.pipeline import PrepareBaseModelTrainingPipeline; PrepareBaseModelTrainingPipeline().main()"
+    deps:
+      - BT_Classification/components/stage_01_prepare_base_model.py
+      - BT_Classification/seed_config.py  # ADDED
+      - config/config.yaml
+      - params.yaml
+    params:
+      - IMAGE_SIZE
+      - LEARNING_RATE
+      - INCLUDE_TOP
+      - WEIGHTS
+      - CLASSES
+    outs:
+      - artifacts/prepare_base_model/base_model.keras
+      - artifacts/prepare_base_model/base_model_updated.keras
+
+  training:
+    cmd: python -c "from BT_Classification.pipeline import ModelTrainingPipeline; ModelTrainingPipeline().main()"
+    deps:
+      - BT_Classification/components/stage_02_model_trainer.py
+      - BT_Classification/seed_config.py  # ADDED
+      - artifacts/data_ingestion/training
+      - artifacts/prepare_base_model/base_model_updated.keras
+      - config/config.yaml
+      - params.yaml
+    params:
+      - IMAGE_SIZE
+      - BATCH_SIZE
+      - EPOCHS
+      - LEARNING_RATE
+      - AUGMENTATION
+    outs:
+      - artifacts/training/model.keras
+
+  evaluation:
+    cmd: python -c "from BT_Classification.pipeline import ModelEvaluationPipeline; ModelEvaluationPipeline().main()"
+    deps:
+      - BT_Classification/components/stage_03_model_evaluation.py
+      - BT_Classification/seed_config.py  # ADDED
+      - artifacts/training/model.keras
+      - artifacts/data_ingestion/testing
+      - config/config.yaml
+      - params.yaml
+    params:
+      - IMAGE_SIZE
+      - BATCH_SIZE
+    outs:
+      - artifacts/evaluation/confusion_matrix.png
+      - artifacts/evaluation/roc_curves.png
+    metrics:
+      - artifacts/evaluation/scores.json:
+          cache: false
