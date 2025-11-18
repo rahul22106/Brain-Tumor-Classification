@@ -16,10 +16,36 @@
 
 
 
+## 🚀 Deployment & CI/CD
+
+### Python Virtual Environment (venv)
+- It is recommended to use a virtual environment for local development:
+```bash
+  python -m venv venv
+```
+
+ ```bash
+   brain/scripts/activate  
+ ```
+
+```bash   
+  pip install -r requirements.txt
+  ```
+
+### DockerHub Integration
+- The CI/CD pipeline uses two required GitHub secrets:
+  - `DOCKERHUB_USERNAME`
+  - `DOCKERHUB_TOKEN`
+- These are used to build and push Docker images automatically as part of the workflow.
+
+### Render Deployment (via GitHub Actions)
+- Automatic deployment to Render is triggered on every push to `main` using a GitHub Actions workflow.
+- Required secret: `RENDER_DEPLOY_HOOK_URL`
+- Render will pull the latest Docker image and deploy the updated Streamlit app.
+
+
+
 ## MLflow
-
-- [Documentation](https://mlflow.org/docs/latest/index.html)
-
 
 
 ##### cmd
@@ -28,20 +54,16 @@
 ### dagshub
 [dagshub](https://dagshub.com/)
 
-MLFLOW_TRACKING_URI=
-MLFLOW_TRACKING_USERNAME=
-MLFLOW_TRACKING_PASSWORD=
-python script.py
+MLFLOW_TRACKING_URI= https://dagshub.com/rahul22106/Brain-Tumor-Classification.mlflow
+MLFLOW_TRACKING_USERNAME= rahul22106
 
 Run this to export as env variables:
 
 ```bash
 
-export MLFLOW_TRACKING_URI=
+export MLFLOW_TRACKING_URI= https://dagshub.com/rahul22106/Brain-Tumor-Classification.mlflow
 
-export MLFLOW_TRACKING_USERNAME=
-
-export MLFLOW_TRACKING_PASSWORD=
+export MLFLOW_TRACKING_USERNAME= rahul22106
 
 ```
 
