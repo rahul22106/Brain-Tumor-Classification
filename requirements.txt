@@ -19,4 +19,4 @@ gdown
 dvc
 dagshub
 streamlit
--e .
+ 
