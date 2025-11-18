@@ -18,4 +18,5 @@ Flask-Cors
 gdown
 dvc
 dagshub
+streamlit
 -e .
