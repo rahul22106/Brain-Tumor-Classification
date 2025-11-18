@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+artifacts/data_ingestion/
+artifacts/evaluation/
+artifacts/prepare_base_model/
+artifacts/training/data/
+artifacts/training/tmp/  
