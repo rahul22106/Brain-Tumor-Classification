@@ -78,7 +78,7 @@ class Training:
                 seed=FIXED_SEED  # FIXED: Always use same seed
             )
             
-            # Validation generator (no augmentation)
+            # Validation generator 
             self.validation_generator = train_datagen.flow_from_directory(
                 directory=str(self.config.training_data),
                 target_size=self.config.params_image_size[:-1],

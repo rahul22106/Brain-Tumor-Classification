@@ -1,11 +1,3 @@
-# ============================================================================
-# UPDATED main.py - WITH REPRODUCIBILITY FIXES
-# ============================================================================
-
-# ============================================================================
-# CRITICAL: SET ALL RANDOM SEEDS FIRST (BEFORE ANY OTHER IMPORTS)
-# ============================================================================
-
 import os
 import random
 import numpy as np
@@ -38,8 +30,7 @@ print(f"✓ Python hash seed: {SEED}")
 os.environ['TF_DETERMINISTIC_OPS'] = '1'
 print("✓ TensorFlow deterministic operations enabled")
 
-# Disable GPU if causing non-deterministic behavior (optional)
-# os.environ['CUDA_VISIBLE_DEVICES'] = ''
+
 
 print("✓ All random seeds configured")
 print("✓ Training will now produce consistent results")
@@ -54,11 +45,6 @@ from BT_Classification.pipeline import DataIngestionTrainingPipeline
 from BT_Classification.pipeline import PrepareBaseModelTrainingPipeline
 from BT_Classification.pipeline import ModelTrainingPipeline
 from BT_Classification.pipeline import ModelEvaluationPipeline
-
-
-# ============================================================================
-# DATA INGESTION STAGE
-# ============================================================================
 
 STAGE_NAME = "Data Ingestion Stage"
 
@@ -77,11 +63,6 @@ try:
 except Exception as e:
     logger.exception(e)
     raise e
-
-
-# ============================================================================
-# PREPARE BASE MODEL STAGE
-# ============================================================================
 
 STAGE_NAME = "Prepare Base Model Stage"
 
@@ -102,10 +83,6 @@ except Exception as e:
     raise e
 
 
-# ============================================================================
-# MODEL TRAINING STAGE
-# ============================================================================
-
 STAGE_NAME = "Model Training Stage"
 
 try:
@@ -124,10 +101,6 @@ except Exception as e:
     logger.exception(e)
     raise e
 
-
-# ============================================================================
-# MODEL EVALUATION STAGE
-# ============================================================================
 
 STAGE_NAME = "Model Evaluation Stage"
 
@@ -148,9 +121,7 @@ except Exception as e:
     raise e
 
 
-# ============================================================================
-# TRAINING COMPLETE
-# ============================================================================
+
 
 print("\n" + "="*70)
 print("ALL STAGES COMPLETED SUCCESSFULLY")
