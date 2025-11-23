@@ -114,16 +114,7 @@ class DataIngestion:
     def validate_data_structure(self):
         """
         Validate that train and test directories exist with proper structure
-        Expected structure:
-        artifacts/data_ingestion/
-        ├── train/
-        │   ├── class1/
-        │   ├── class2/
-        │   └── ...
-        └── test/
-            ├── class1/
-            ├── class2/
-            └── ...
+       
         """
         try:
             logger.info("Validating data structure...")

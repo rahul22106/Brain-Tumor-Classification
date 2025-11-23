@@ -15,9 +15,9 @@ model = load_classifier()
 
 def preprocess(img: Image.Image) -> np.ndarray:
     img = img.convert("RGB")
-    img = img.resize((224, 224))  # Adjust if your model uses another size
-    arr = np.array(img) / 255.0   # Normalize pixel values
-    arr = arr[np.newaxis, ...]    # Add batch dimension
+    img = img.resize((224, 224)) 
+    arr = np.array(img) / 255.0   
+    arr = arr[np.newaxis, ...]    
     return arr
 
 st.title("Brain Tumor Classification (MRI Image)")
